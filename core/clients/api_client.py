@@ -1,5 +1,3 @@
-import json
-import pytest
 import requests
 import os
 from dotenv import load_dotenv
@@ -12,8 +10,7 @@ import allure
 
 load_dotenv()
 
-json_file = open("core/settings/new_booking_data.json")
-bookings_data = json.load(json_file)
+id = 1
 
 
 class APIClient:
@@ -78,10 +75,9 @@ class APIClient:
         with allure.step("Обновление заголовка с авторизацией"):
             self.session.headers.update({"Authorization": f"Bearer {token}"})
 
-    @pytest.mark.parametrize("bookings_data", bookings_data)
-    def get_booking_by_id(self, bookings_data):
+    def get_booking_by_id(self, id):
         with allure.step("Получение брони по ID"):
-            url = f"{self.base_url}{Endpoints.BOOKING_ENDPOINT}/{bookings_data["id"]}"
+            url = f"{self.base_url}{Endpoints.BOOKING_ENDPOINT}/{id}"
             response = self.session.get(url, headers=self.session.headers, timeout=Timeouts.TIMEOUT)
             response.raise_for_status()
             response_json = response.json()
