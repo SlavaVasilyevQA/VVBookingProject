@@ -81,6 +81,7 @@ class APIClient:
             response = self.session.get(url, headers=self.session.headers, timeout=Timeouts.TIMEOUT)
             response.raise_for_status()
             response_json = response.json()
+            return response_json
 
         with allure.step("Проверка статус кода"):
             assert response.status_code == 200, f"Ожидали статус код 200, но получили {response.status_code}"
