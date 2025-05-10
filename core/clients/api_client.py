@@ -10,8 +10,6 @@ import allure
 
 load_dotenv()
 
-id = 1
-
 
 class APIClient:
     def __init__(self):
@@ -69,8 +67,10 @@ class APIClient:
             }
             response = self.session.post(url, json=payload, timeout=Timeouts.TIMEOUT)
             response.raise_for_status()
+
         with allure.step("Проверка статус кода"):
             assert response.status_code == 200, f"Ожидали статус код 200, но получили {response.status_code}"
+
         token = response.json().get("token")
         with allure.step("Обновление заголовка с авторизацией"):
             self.session.headers.update({"Authorization": f"Bearer {token}"})
