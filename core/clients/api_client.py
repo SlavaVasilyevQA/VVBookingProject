@@ -76,10 +76,9 @@ class APIClient:
             url = f"{self.base_url}{Endpoints.BOOKING_ENDPOINT}/{booking_id}"
             response = self.session.get(url, headers=self.session.headers)
             response.raise_for_status()
-            response_json = response.json()
         with allure.step("Проверка статус кода"):
             assert response.status_code == 200, f"Ожидали статус код 200, но получили {response.status_code}"
-        return response_json
+        return response.json()
 
     def delete_booking(self, booking_id):
         with allure.step("Удаление брони"):
@@ -103,6 +102,26 @@ class APIClient:
         with allure.step("Получение броней"):
             url = f"{self.base_url}{Endpoints.BOOKING_ENDPOINT}"
             response = self.session.get(url, params=params)
+            response.raise_for_status()
+        with allure.step("Проверка статус кода"):
+            assert response.status_code == 200, f"Ожидали статус код 200, но получили {response.status_code}"
+        return response.json()
+
+    def update_booking(self, booking_id, booking_data):
+        with allure.step("Обновление брони"):
+            url = f"{self.base_url}{Endpoints.BOOKING_ENDPOINT}/{booking_id}"
+            response = self.session.put(url, auth=HTTPBasicAuth(Users.USERNAME, Users.PASSWORD),
+                                        headers=self.session.headers, json=booking_data)
+            response.raise_for_status()
+        with allure.step("Проверка статус кода"):
+            assert response.status_code == 200, f"Ожидали статус код 200, но получили {response.status_code}"
+        return response.json()
+
+    def partial_update_booking(self, booking_id, booking_data):
+        with allure.step("Частичное обновление брони"):
+            url = f"{self.base_url}{Endpoints.BOOKING_ENDPOINT}/{booking_id}"
+            response = self.session.patch(url, auth=HTTPBasicAuth(Users.USERNAME, Users.PASSWORD),
+                                          headers=self.session.headers, json=booking_data)
             response.raise_for_status()
         with allure.step("Проверка статус кода"):
             assert response.status_code == 200, f"Ожидали статус код 200, но получили {response.status_code}"
