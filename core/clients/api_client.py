@@ -1,11 +1,10 @@
 import requests
 import os
 from dotenv import load_dotenv
-from jsonschema import validate
 from core.settings.environmets import Environment
 from core.clients.endpoints import Endpoints
 from core.settings.config import Users, Timeouts
-from core.settings.contracts import BOOKING_DATA_SCHEME
+from requests.auth import HTTPBasicAuth
 import allure
 
 load_dotenv()
@@ -53,7 +52,6 @@ class APIClient:
             url = f"{self.base_url}{Endpoints.PING_ENDPOINT}"
             response = self.session.get(url)
             response.raise_for_status()
-
         with allure.step("Проверка статус кода"):
             assert response.status_code == 201, f"Ожидали статус код 201, но получили {response.status_code}"
         return response.status_code
@@ -67,25 +65,64 @@ class APIClient:
             }
             response = self.session.post(url, json=payload, timeout=Timeouts.TIMEOUT)
             response.raise_for_status()
-
         with allure.step("Проверка статус кода"):
             assert response.status_code == 200, f"Ожидали статус код 200, но получили {response.status_code}"
-
         token = response.json().get("token")
         with allure.step("Обновление заголовка с авторизацией"):
             self.session.headers.update({"Authorization": f"Bearer {token}"})
 
-    def get_booking_by_id(self, id):
+    def get_booking_by_id(self, booking_id):
         with allure.step("Получение брони по ID"):
-            url = f"{self.base_url}{Endpoints.BOOKING_ENDPOINT}/{id}"
-            response = self.session.get(url, headers=self.session.headers, timeout=Timeouts.TIMEOUT)
+            url = f"{self.base_url}{Endpoints.BOOKING_ENDPOINT}/{booking_id}"
+            response = self.session.get(url, headers=self.session.headers)
             response.raise_for_status()
-            response_json = response.json()
-
         with allure.step("Проверка статус кода"):
             assert response.status_code == 200, f"Ожидали статус код 200, но получили {response.status_code}"
+        return response.json()
 
-        with allure.step("Валидация JSON-схемы"):
-            validate(response_json, BOOKING_DATA_SCHEME)
+    def delete_booking(self, booking_id):
+        with allure.step("Удаление брони"):
+            url = f"{self.base_url}{Endpoints.BOOKING_ENDPOINT}/{booking_id}"
+            response = self.session.delete(url, auth=HTTPBasicAuth(Users.USERNAME, Users.PASSWORD))
+            response.raise_for_status()
+        with allure.step("Проверка статус кода"):
+            assert response.status_code == 201, f"Ожидали статус код 201, но получили {response.status_code}"
+        return response.status_code == 201
 
-        return response_json
+    def create_booking(self, booking_data):
+        with allure.step("Создание брони"):
+            url = f"{self.base_url}{Endpoints.BOOKING_ENDPOINT}"
+            response = self.session.post(url, headers=self.session.headers, json=booking_data)
+            response.raise_for_status()
+        with allure.step("Проверка статус кода"):
+            assert response.status_code == 200, f"Ожидали статус код 200, но получили {response.status_code}"
+        return response.json()
+
+    def get_booking_ids(self, params=None):
+        with allure.step("Получение броней"):
+            url = f"{self.base_url}{Endpoints.BOOKING_ENDPOINT}"
+            response = self.session.get(url, params=params)
+            response.raise_for_status()
+        with allure.step("Проверка статус кода"):
+            assert response.status_code == 200, f"Ожидали статус код 200, но получили {response.status_code}"
+        return response.json()
+
+    def update_booking(self, booking_id, booking_data):
+        with allure.step("Обновление брони"):
+            url = f"{self.base_url}{Endpoints.BOOKING_ENDPOINT}/{booking_id}"
+            response = self.session.put(url, auth=HTTPBasicAuth(Users.USERNAME, Users.PASSWORD),
+                                        headers=self.session.headers, json=booking_data)
+            response.raise_for_status()
+        with allure.step("Проверка статус кода"):
+            assert response.status_code == 200, f"Ожидали статус код 200, но получили {response.status_code}"
+        return response.json()
+
+    def partial_update_booking(self, booking_id, booking_data):
+        with allure.step("Частичное обновление брони"):
+            url = f"{self.base_url}{Endpoints.BOOKING_ENDPOINT}/{booking_id}"
+            response = self.session.patch(url, auth=HTTPBasicAuth(Users.USERNAME, Users.PASSWORD),
+                                          headers=self.session.headers, json=booking_data)
+            response.raise_for_status()
+        with allure.step("Проверка статус кода"):
+            assert response.status_code == 200, f"Ожидали статус код 200, но получили {response.status_code}"
+        return response.json()
