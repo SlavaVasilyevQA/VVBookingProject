@@ -85,7 +85,6 @@ def test_create_booking_without_lastname(api_client):
     with allure.step("Используем контекстный менеджер для проверки ожидаемой ошибки"):
         with pytest.raises(requests.exceptions.HTTPError) as exc_info:
             response = api_client.create_booking(payload)
-            response.raise_for_status()
     with allure.step("Проверка статус кода"):
         assert exc_info.value.response.status_code == 500
     with allure.step("Проверка содержимого ответа"):
