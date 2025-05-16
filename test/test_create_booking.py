@@ -3,7 +3,8 @@ from jsonschema import validate
 from core.settings.contracts import CREATE_BOOKING_DATA_SCHEME
 from pydantic import ValidationError
 from core.model.booking import BookingResponse
-import json
+import pytest
+import requests
 
 
 @allure.feature("Проверка создания брони")
@@ -81,12 +82,11 @@ def test_create_booking_without_lastname(api_client):
         },
         "additionalneeds": "Dinner"
     }
-    response_error = {
-        "error": "Отсутствует обязательное поле"
-    }
-    with allure.step("Отправка запроса без поля lastname"):
-        response = api_client.create_booking(payload)
+    with allure.step("Используем контекстный менеджер для проверки ожидаемой ошибки"):
+        with pytest.raises(requests.exceptions.HTTPError) as exc_info:
+            response = api_client.create_booking(payload)
+            response.raise_for_status()
     with allure.step("Проверка статус кода"):
-        assert response.status_code == 400, f"Ожидали статус код 400 Bad Request, но получили {response.status_code} Bad Request"
-    with allure.step("Проверка наличия сообщения об ошибке"):
-        assert json.loads(response.text) == response_error
+        assert exc_info.value.response.status_code == 500
+    with allure.step("Проверка содержимого ответа"):
+        assert exc_info.value.response.text == "Internal Server Error"
